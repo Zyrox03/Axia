@@ -73,7 +73,7 @@ router.put('/', upload.single('projectImage'), async (req, res) => {
     }
 
     const savedPortfolioContent = await updatedPortfolio.save();
-    res.status(200).json({ message: `Section updated successfully`, savedPortfolioContent });
+    res.status(200).json({ message: `Project updated successfully`, savedPortfolioContent });
 
 
   } catch (error) {
