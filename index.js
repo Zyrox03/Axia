@@ -6,7 +6,7 @@ const mongoose = require('mongoose');
 require('dotenv').config();
 
 const cors = require('cors');
-
+ 
 const helmet = require('helmet')
 
 const userRouter = require('./routes/userRoutes/user');
@@ -16,8 +16,10 @@ const projectsSectionRouter = require('./routes/portfolioRoutes/projectsSection'
 const portfolioRouter = require('./routes/portfolioRoutes/portfolio');
 
 const mongoUrl = process.env.MONGODB_URL
+
+mongoose.set('strictQuery', false);
+
 main().catch(err => console.log(err));
- 
 async function main() {
   await mongoose.connect(mongoUrl);
   console.log("Connected to Database")
