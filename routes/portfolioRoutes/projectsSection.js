@@ -10,10 +10,11 @@ const { storage } = require('../../cloudinary')
 
 const upload = multer({ storage })
 
-
+const authenticateToken = require('../../middleware/authenticateTokenMiddleware');
+const { isProfileOwner } = require('../../middleware/authorizationMiddleware');
 
 // PUT route for adding & updating an existing project in the projectsSection
-router.put('/', upload.single('projectImage'), async (req, res) => {
+router.put('/', authenticateToken, isProfileOwner, upload.single('projectImage'), async (req, res) => {
   const { firebaseID } = req.params;
   try {
     const existingPortfolio = await PortfolioContent.findOne({ firebaseID });
@@ -73,7 +74,7 @@ router.put('/', upload.single('projectImage'), async (req, res) => {
     }
 
     const savedPortfolioContent = await updatedPortfolio.save();
-    res.status(200).json({ message: `Project updated successfully`, savedPortfolioContent });
+    res.status(200).json({ message: `Section updated successfully`, savedPortfolioContent });
 
 
   } catch (error) {
@@ -91,7 +92,7 @@ router.put('/', upload.single('projectImage'), async (req, res) => {
 
 
 // DELETE route for removing a project from the projectsSection
-router.delete('/:projectID', async (req, res) => {
+router.delete('/:projectID', authenticateToken, isProfileOwner, async (req, res) => {
   const { firebaseID, projectID } = req.params;
   try {
     const existingPortfolio = await PortfolioContent.findOne({ firebaseID });

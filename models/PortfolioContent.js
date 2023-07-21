@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
-
+const portfolioContentJoiSchema = require('../JOI/portfolioContentJoiSchema')
 
 
 const projectSchema = new mongoose.Schema({
     projectID: {
         type: String,
-        required: true,
     },
     projectImage: {
         path: {
@@ -17,14 +16,12 @@ const projectSchema = new mongoose.Schema({
     },
     title: {
         type: String,
-        required: true,
     },
     description: {
         type: String,
     },
     linkButton: {
         type: String,
-        required: true,
     },
 });
 
@@ -33,7 +30,6 @@ const portfolioContentSchema = new mongoose.Schema({
 
     firebaseID: {
         type: String,
-        required: true
 
     },
 
@@ -119,6 +115,17 @@ const portfolioContentSchema = new mongoose.Schema({
         required: true
     },
 });
+
+
+// Mongoose middleware to validate and save data before saving to the database
+portfolioContentSchema.pre('save', async function (next) {
+    try {
+      await portfolioContentJoiSchema.validateAsync(this.toObject());
+      next();
+    } catch (err) {
+      next(err);
+    }
+  });
 
 const PortfolioContent = mongoose.model('PortfolioContent', portfolioContentSchema);
 

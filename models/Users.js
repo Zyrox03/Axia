@@ -1,18 +1,19 @@
 const mongoose = require('mongoose');
+const userJoiSchema = require('../JOI/userJoiSchema')
 
 const userSchema = new mongoose.Schema({
   firebaseID: {
     type: String,
-    required: true,
+    // required: true,
     unique: true
   },
   username: {
     type: String,
-    required: true,
+    // required: true,
   },
   email: {
     type: String,
-    required: true,
+    // required: true,
     unique: true,
   },
   emailVerified: {
@@ -24,7 +25,7 @@ const userSchema = new mongoose.Schema({
   },
   name: {
     type: String,
-    required: true
+    // required: true
   },
   phoneNumber: {
     type: String,
@@ -58,12 +59,25 @@ const userSchema = new mongoose.Schema({
         userAlias: { type: String },
       }
     ],
-    required: true,
+    // required: true,
     default: [],
   },
   createdAt: {
     type: Date,
     default: Date.now
+  }
+});
+
+
+
+
+// Mongoose middleware to validate and save data before saving to the database
+userSchema.pre('save', async function (next) {
+  try {
+    await userJoiSchema.validateAsync(this.toObject());
+    next();
+  } catch (err) {
+    next(err);
   }
 });
 

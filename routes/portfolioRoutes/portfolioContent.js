@@ -10,8 +10,11 @@ const multer = require('multer')
 const { storage } = require('../../cloudinary')
 const upload = multer({ storage })
 
+const authenticateToken = require('../../middleware/authenticateTokenMiddleware');
+const { isProfileOwner } = require('../../middleware/authorizationMiddleware');
 
-router.get('/', async (req, res) => {
+
+router.get('/', authenticateToken,  isProfileOwner, async (req, res) => {
     const { firebaseID } = req.params
     try {
 
@@ -29,11 +32,11 @@ router.get('/', async (req, res) => {
 
 })
 
-router.post('/', async (req, res) => {
+router.post('/', authenticateToken, isProfileOwner,  async (req, res) => {
     try {
         const { firebaseID } = req.params
         const existingUser = await User.findOne({ firebaseID });
-
+ 
         if (!existingUser) {
             return res.status(400).json({ message: "Can't find User" });
         }
@@ -77,11 +80,11 @@ router.post('/', async (req, res) => {
             },
             footerSection: {
                 socials: {
-                    instagram: "https://www.instagram.com/myprofile",
-                    linkedIn: "https://www.linkedin.com/in/myprofile",
-                    twitter: "https://www.twitter.com/myprofile",
-                    youtube: "https://www.youtube.com/myprofile",
-                    facebook: "https://www.facebook.com/myprofile",
+                    instagram: "",
+                    linkedIn: "",
+                    twitter: "",
+                    youtube: "",
+                    facebook: "",
                 },
                 footerText: "© 2023 My Portfolio. All rights reserved.",
             },
@@ -107,7 +110,7 @@ router.post('/', async (req, res) => {
 })
 
 
-router.put('/section/:section', upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'mainImage', maxCount: 1 }]), async (req, res) => {
+router.put('/section/:section', authenticateToken, isProfileOwner,  upload.fields([{ name: 'logo', maxCount: 1 }, { name: 'mainImage', maxCount: 1 }]), async (req, res) => {
     const { firebaseID, section } = req.params;
 
     try {
@@ -122,7 +125,7 @@ router.put('/section/:section', upload.fields([{ name: 'logo', maxCount: 1 }, { 
         let updatedPortfolio;
         let updateObject;
         let savedUser
-        
+
         if (section === 'footerSection') {
             updateObject = {
                 [section]: { ...req.body, socials: JSON.parse(req.body.socials) }
@@ -217,27 +220,27 @@ router.put('/section/:section', upload.fields([{ name: 'logo', maxCount: 1 }, { 
 
         if (section === "URLSettings") {
             savedUser = await updatedUser.save();
-          }
+        }
         const savedPortfolioContent = await updatedPortfolio.save();
 
         const jsonResponse = {
             message: "Section updated successfully",
             savedPortfolioContent,
-          };
-          
-          if (section === "URLSettings") {
+        };
+
+        if (section === "URLSettings") {
             jsonResponse.savedUser = savedUser;
-          }
-          
-          res.status(200).json(jsonResponse);   
-        
-        } catch (error) {
+        }
+
+        res.status(200).json(jsonResponse);
+
+    } catch (error) {
         console.log(error.message);
         res.status(500).json({ error: 'An error occurred while updating the portfolio' });
     }
 });
 
-router.delete('/', async (req, res) => {
+router.delete('/', authenticateToken,  isProfileOwner, async (req, res) => {
     const { firebaseID } = req.params
     try {
         const deletedPortfolio = await PortfolioContent.findOneAndDelete({ firebaseID },);
@@ -261,7 +264,7 @@ router.delete('/', async (req, res) => {
 
 // portfolio delete image
 
-router.delete('/:section/pictures/:encodedFilename', async (req, res) => {
+router.delete('/:section/pictures/:encodedFilename', authenticateToken,  isProfileOwner, async (req, res) => {
     const { firebaseID, section, encodedFilename } = req.params;
     const filename = decodeURIComponent(encodedFilename);
 
