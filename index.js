@@ -6,11 +6,11 @@ require('dotenv').config();
 
 var admin = require("firebase-admin");
 
-// var serviceAccount = JSON.parse(process.env.FIREBASE_SERVICE_ACCOUNT)
+const serviceAccount = require('./FBServiceAccount.json')
 
-// admin.initializeApp({
-//   credential: admin.credential.cert(serviceAccount)
-// });
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
  
 
 
@@ -27,6 +27,8 @@ const projectsSectionRouter = require('./routes/portfolioRoutes/projectsSection'
 const portfolioRouter = require('./routes/portfolioRoutes/portfolio');
 
 const mongoUrl = process.env.MONGODB_URL
+mongoose.set('strictQuery', false);
+
 main().catch(err => console.log(err));
 
 async function main() {
