@@ -11,7 +11,7 @@ const upload = multer({ storage })
 const authenticateToken = require('../../middleware/authenticateTokenMiddleware');
 const { isProfileOwner } = require('../../middleware/authorizationMiddleware');
 
-router.get('/', authenticateToken, isProfileOwner, async (req, res) => {
+router.get('/', authenticateToken, async (req, res) => {
     try {
 
         const { firebaseID } = req.params
@@ -31,7 +31,7 @@ router.get('/', authenticateToken, isProfileOwner, async (req, res) => {
 
 
 
-router.post('/', authenticateToken, isProfileOwner, async (req, res) => {
+router.post('/', authenticateToken, async (req, res) => {
     try {
         const { firebaseID } = req.params;
         const existingUser = await User.findOne({ email: req.body.email });
