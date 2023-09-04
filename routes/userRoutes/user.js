@@ -24,7 +24,20 @@ router.get('/', authenticateToken, isProfileOwner, async (req, res) => {
             return res.status(404).json({ error: 'User not fouund' });
         }
 
-        res.status(200).json(JSON.stringify(user));
+        const userStore = user.platforms.find(platform => platform.platform === 'store');
+        const storeID = userStore ? userStore.storeID : null;
+
+        if (!mongoose.Types.ObjectId.isValid(storeID)) {
+            return res.status(404).json({ error: 'Store not Found' })
+        }
+
+        const store = await Store.findById(storeID)
+        if (!store) {
+            return res.status(404).json({ error: 'Store not Found' })
+        }
+
+
+        res.status(200).json({ userData: JSON.stringify(user), store });
     } catch (error) {
         console.log(error)
         res.status(500).json({ message: error.message });
@@ -55,12 +68,12 @@ router.post('/', authenticateToken, isProfileOwner, async (req, res) => {
             if (!mongoose.Types.ObjectId.isValid(storeID)) {
                 return res.status(404).json({ error: 'Store not Found' })
             }
-    
+
             const store = await Store.findById(storeID)
             if (!store) {
                 return res.status(404).json({ error: 'Store not Found' })
             }
-    
+
 
             return res.status(200).json({
                 savedUser: JSON.stringify(existingUser),
@@ -275,7 +288,7 @@ router.delete('/:picture/:encodedFilename', authenticateToken, isProfileOwner, a
                 store.store_logo.filename = ''
 
 
-        } 
+        }
         else if (picture === 'storeBanner') {
 
 
@@ -298,7 +311,7 @@ router.delete('/:picture/:encodedFilename', authenticateToken, isProfileOwner, a
 
 
         }
-         else {
+        else {
             // Invalid picture parameter
             return res.status(400).json({ error: 'Invalid picture parameter' });
         }
