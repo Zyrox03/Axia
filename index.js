@@ -10,7 +10,9 @@ var admin = require("firebase-admin");
 
 const serviceAccount = require('./FBServiceAccount.json')
 
-
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount)
+});
 
 
 const helmet = require('helmet')
@@ -48,6 +50,8 @@ app.use(sanitizeMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
+app.set('trust proxy', true);
+
 app.use(limiter)
 app.use(
   helmet({
