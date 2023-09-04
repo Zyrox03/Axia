@@ -123,6 +123,7 @@ router.post('/', authenticateToken, isProfileOwner, async (req, res) => {
                 description: "Your go-to shop for all your favorite things, delivered with a smile.",
                 owner: {
                     ownerID: savedUser._id, // Link the store to the newly created user
+                    ownerEmail: savedUser.email, // Link the store to the newly created user
                 }
             });
             // Save the store
