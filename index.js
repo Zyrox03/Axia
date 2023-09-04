@@ -58,12 +58,16 @@ app.use(
     crossOriginEmbedderPolicy: false,
   })
 );
-app.use(
-  cors({
-    origin: ['http://localhost:5173', 'http://localhost:5174', 'https://axia-editor.pages.dev/', 'https://axia-store.pages.dev/'], // Add other allowed origins here
-    credentials: true,
-  })
-);
+
+const corsOptions = {
+  origin: 'https://axia-editor.pages.dev', // Replace with your allowed origin
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  credentials: true, // If your client sends credentials (e.g., cookies)
+  optionsSuccessStatus: 204, // Some legacy browsers (IE11, various SmartTVs) choke on 204
+};
+
+// Enable CORS with specific options
+app.use(cors(corsOptions));
 
 
 
