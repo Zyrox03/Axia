@@ -50,7 +50,7 @@ app.use(sanitizeMiddleware);
 
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.set('trust proxy', true);
+app.set('trust proxy', ['loopback', 'linklocal', 'uniquelocal']);
 
 app.use(limiter)
 app.use(
