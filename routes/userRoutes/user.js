@@ -49,8 +49,22 @@ router.post('/', authenticateToken, isProfileOwner, async (req, res) => {
                 });
             }
 
+            const userStore = existingUser.platforms.find(platform => platform.platform === 'store');
+            const storeID = userStore ? userStore.storeID : null;
+
+            if (!mongoose.Types.ObjectId.isValid(storeID)) {
+                return res.status(404).json({ error: 'Store not Found' })
+            }
+    
+            const store = await Store.findById(storeID)
+            if (!store) {
+                return res.status(404).json({ error: 'Store not Found' })
+            }
+    
+
             return res.status(200).json({
                 savedUser: JSON.stringify(existingUser),
+                store
             });
 
         } else {
