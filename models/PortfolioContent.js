@@ -11,7 +11,7 @@ const projectSchema = new mongoose.Schema({
             type: String
         },
         filename: {
-            type: String
+            type: String    
         },
     },
     title: {

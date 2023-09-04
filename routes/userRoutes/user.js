@@ -1,7 +1,9 @@
 const express = require('express');
 const router = express.Router({ mergeParams: true })
+const mongoose = require('mongoose');
 
 const User = require('../../models/Users')
+const Store = require('../../models/Store');
 
 const cloudinary = require('cloudinary').v2;
 const multer = require('multer')
@@ -11,7 +13,8 @@ const upload = multer({ storage })
 const authenticateToken = require('../../middleware/authenticateTokenMiddleware');
 const { isProfileOwner } = require('../../middleware/authorizationMiddleware');
 
-router.get('/', authenticateToken,isProfileOwner, async (req, res) => {
+
+router.get('/', authenticateToken, isProfileOwner, async (req, res) => {
     try {
 
         const { firebaseID } = req.params
@@ -31,11 +34,10 @@ router.get('/', authenticateToken,isProfileOwner, async (req, res) => {
 
 
 
-router.post('/', authenticateToken,isProfileOwner, async (req, res) => {
+router.post('/', authenticateToken, isProfileOwner, async (req, res) => {
     try {
         const { firebaseID } = req.params;
         const existingUser = await User.findOne({ email: req.body.email });
-
         if (existingUser) {
             if (!existingUser.emailVerified || !existingUser.location) {
                 // Update emailVerified and location if needed
@@ -52,14 +54,18 @@ router.post('/', authenticateToken,isProfileOwner, async (req, res) => {
             });
 
         } else {
+
+            const preUserAlias = req.body.displayName.replace(/[\s\W]+/g, '') + Date.now()
+            const storeID = new mongoose.Types.ObjectId();
+
             // User doesn't exist, create a new user
             const newUser = new User({
                 firebaseID,
                 username: req.body.displayName,
                 email: req.body.email,
                 emailVerified: req.body.emailVerified,
-                expertise: '', // Add the required fields here
-                name: req.body.displayName,
+                expertise: '',
+                profileFirstName: req.body.displayName,
                 phoneNumber: '',
                 profilePicture: {
                     path:
@@ -72,12 +78,30 @@ router.post('/', authenticateToken,isProfileOwner, async (req, res) => {
                         'https://images.unsplash.com/photo-1489183988443-b37b7e119ba6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=872&q=80',
                     filename: '',
                 },
-                platforms: [],
+                platforms: [{
+                    platform: 'store',
+                    userAlias: preUserAlias,
+                    storeID: storeID
+                }],
                 location: req.body.location || '',
             });
 
             const savedUser = await newUser.save();
-            return res.status(200).json({ savedUser: JSON.stringify(savedUser) });
+
+            // CREATE A STORE FOR THAT NEW USER 
+            const newStore = new Store({
+                _id: storeID,
+                store_name: `${req.body.displayName}'s Store`,
+                heroTitle: "Welcome to my store!",
+                description: "Your go-to shop for all your favorite things, delivered with a smile.",
+                owner: {
+                    ownerID: savedUser._id, // Link the store to the newly created user
+                }
+            });
+            // Save the store
+            const savedStore = await newStore.save();
+
+            return res.status(200).json({ savedUser: JSON.stringify(savedUser), savedStore: JSON.stringify(savedStore) });
         }
     } catch (error) {
         if (error.isJoi) {
@@ -86,6 +110,7 @@ router.post('/', authenticateToken,isProfileOwner, async (req, res) => {
             res.status(400).json({ message: error.message });
         } else if (error.code === 11000) {
             // Handle duplicate key error
+            console.log(error)
             return res.status(400).json({ message: 'User with this firebaseID already exists' });
         } else {
             // Handle other unexpected errors
@@ -100,7 +125,7 @@ router.post('/', authenticateToken,isProfileOwner, async (req, res) => {
 router.put('/', authenticateToken, isProfileOwner, upload.fields([{ name: 'profileImage', maxCount: 1 }, { name: 'profileBanner', maxCount: 1 }]), async (req, res) => {
     try {
         const { firebaseID } = req.params
-        const { profileUsername, profileName, profileSkill, profilePhone } = req.body
+        const { profileUsername, profileFirstName, profileLastName, birthDate, profileSkill, profilePhone, citizenship, businessEmail, businessName } = req.body
 
         const existingUser = await User.findOne({ firebaseID })
 
@@ -147,10 +172,16 @@ router.put('/', authenticateToken, isProfileOwner, upload.fields([{ name: 'profi
         const updatedUser = await User.findOneAndUpdate({ firebaseID }, {
             username: profileUsername,
             expertise: profileSkill,
-            name: profileName,
+            profileFirstName,
+            profileLastName,
+            birthDate,
             phoneNumber: profilePhone,
             profilePicture: profileImage,
             bannerPicture: profileBanner,
+            citizenship,
+
+            businessName,
+            businessEmail,
         }, {
             new: true
         });
@@ -174,7 +205,7 @@ router.put('/', authenticateToken, isProfileOwner, upload.fields([{ name: 'profi
 
 // profile delete image
 
-router.delete('/:picture/:encodedFilename', authenticateToken,isProfileOwner, async (req, res) => {
+router.delete('/:picture/:encodedFilename', authenticateToken, isProfileOwner, async (req, res) => {
     const { firebaseID, picture, encodedFilename } = req.params;
     const filename = decodeURIComponent(encodedFilename);
     try {
@@ -186,7 +217,7 @@ router.delete('/:picture/:encodedFilename', authenticateToken,isProfileOwner, as
 
 
         const existingUser = await User.findOne({ firebaseID })
-
+        let store
         if (!existingUser) {
             return res.status(400).json({ message: "Can't find the user" })
         }
@@ -203,19 +234,64 @@ router.delete('/:picture/:encodedFilename', authenticateToken,isProfileOwner, as
 
         } else if (picture === 'bannerPicture') {
             // Delete the profile banner
-
             if (existingUser.bannerPicture.filename) {
                 await cloudinary.uploader.destroy(filename)
             }
             existingUser.bannerPicture.path = "https://images.unsplash.com/photo-1489183988443-b37b7e119ba6?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=872&q=80"
             existingUser.bannerPicture.filename = ''
 
-        } else {
+        } else if (picture === 'storeLogo') {
+
+
+            const userStore = existingUser.platforms.find(platform => platform.platform === 'store');
+            const storeID = userStore ? userStore.storeID : null;
+
+            store = await Store.findById(storeID)
+
+            if (!store) {
+                return res.status(400).json({ message: "Can't find the store" })
+            }
+
+            // Delete the profile banner
+            if (store.store_logo.filename) {
+                await cloudinary.uploader.destroy(filename)
+            }
+
+            store.store_logo.path = '',
+                store.store_logo.filename = ''
+
+
+        } 
+        else if (picture === 'storeBanner') {
+
+
+            const userStore = existingUser.platforms.find(platform => platform.platform === 'store');
+            const storeID = userStore ? userStore.storeID : null;
+
+            store = await Store.findById(storeID)
+
+            if (!store) {
+                return res.status(400).json({ message: "Can't find the store" })
+            }
+
+            // Delete the profile banner
+            if (store.store_banner.filename) {
+                await cloudinary.uploader.destroy(filename)
+            }
+
+            store.store_banner.path = '',
+                store.store_banner.filename = ''
+
+
+        }
+         else {
             // Invalid picture parameter
             return res.status(400).json({ error: 'Invalid picture parameter' });
         }
+
         const updatedUser = await existingUser.save()
-        res.status(200).json({ message: "Picture deleted successfully ", updatedUser })
+        const updatedStore = await store.save()
+        res.status(200).json({ message: "Picture deleted successfully ", updatedUser, updatedStore })
 
     } catch (error) {
         console.log(error.message);
@@ -223,8 +299,6 @@ router.delete('/:picture/:encodedFilename', authenticateToken,isProfileOwner, as
     }
 
 })
-
-
 
 
 module.exports = router  

@@ -7,6 +7,11 @@ const userSchema = new mongoose.Schema({
     // required: true,
     unique: true
   },
+  merchantID: {
+    type: String,
+    sparse: true,
+    unique: true
+  },
   username: {
     type: String,
     // required: true,
@@ -23,9 +28,22 @@ const userSchema = new mongoose.Schema({
   expertise: {
     type: String
   },
-  name: {
+  profileFirstName: {
     type: String,
     // required: true
+  },
+  profileLastName: {
+    type: String,
+    // required: true
+  },
+  birthDate: {
+    type: String,
+  },
+  businessEmail: {
+    type: String,
+  },
+  businessName: {
+    type: String,
   },
   phoneNumber: {
     type: String,
@@ -49,7 +67,7 @@ const userSchema = new mongoose.Schema({
       type: String
     },
   },
-  location: {
+  citizenship: {
     type: String
   },
   platforms: {
@@ -57,6 +75,7 @@ const userSchema = new mongoose.Schema({
       {
         platform: { type: String },
         userAlias: { type: String },
+        storeID: { type: String }
       }
     ],
     // required: true,
