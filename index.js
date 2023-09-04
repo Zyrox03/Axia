@@ -60,7 +60,7 @@ app.use(
 );
 
 const corsOptions = {
-  origin: 'https://axia-editor.pages.dev', // Replace with your allowed origin
+  origin: ['https://axia-editor.pages.dev','https://axia-store.pages.dev'], // Replace with your allowed origin
   methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
   credentials: true, // If your client sends credentials (e.g., cookies)
   optionsSuccessStatus: 204, // Some legacy browsers (IE11, various SmartTVs) choke on 204
