@@ -1,5 +1,9 @@
 # Axia - Your All-in-One Ecommerce Store Creator
 
+## Note
+
+This repository contains the server code for Axia.
+
 ## Overview
 
 Axia is a versatile ecommerce store creator designed to empower users in establishing and customizing their online shops effortlessly. With a user-friendly interface, robust features, and a powerful technology stack, Axia provides online entrepreneurs with an all-in-one solution to establish, manage, and scale their ecommerce ventures with confidence.
